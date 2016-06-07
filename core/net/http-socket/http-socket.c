@@ -324,6 +324,7 @@ parse_url(const char *url, char *host, uint16_t *portptr, char *path)
         if(host != NULL) {
           host[i] = 0;
         }
+        urlptr++;
         break;
       }
       if(host != NULL) {
@@ -347,6 +348,11 @@ parse_url(const char *url, char *host, uint16_t *portptr, char *path)
       }
       ++urlptr;
     }
+  }
+
+  /* check if host is null terminated */
+  if(!memchr(host, 0, MAX_HOSTLEN)) {
+    return 0;
   }
 
   /* Find the port. Default is 80. */
@@ -414,11 +420,11 @@ event(struct tcp_socket *tcps, void *ptr,
       tcp_socket_send_str(tcps, "Host: ");
       /* If we have IPv6 host, add the '[' and the ']' characters
          to the host. As in rfc2732. */
-      if (strchr(host, ':')) {
+      if(memchr(host, ':', MAX_HOSTLEN)) {
         tcp_socket_send_str(tcps, "[");
       }
       tcp_socket_send_str(tcps, host);
-      if (strchr(host, ':')) {
+      if(memchr(host, ':', MAX_HOSTLEN)) {
         tcp_socket_send_str(tcps, "]");
       }
       tcp_socket_send_str(tcps, "\r\n");
