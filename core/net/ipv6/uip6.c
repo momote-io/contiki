@@ -79,6 +79,11 @@
 #include "net/ipv6/uip-ds6.h"
 #include "net/ipv6/multicast/uip-mcast6.h"
 
+#if UIP_CONF_IPV6_RPL
+#include "rpl/rpl.h"
+#include "rpl/rpl-private.h"
+#endif
+
 #include <string.h>
 
 /*---------------------------------------------------------------------------*/
@@ -87,10 +92,6 @@
 
 #define DEBUG DEBUG_NONE
 #include "net/ip/uip-debug.h"
-
-#if UIP_CONF_IPV6_RPL
-#include "rpl/rpl.h"
-#endif /* UIP_CONF_IPV6_RPL */
 
 #if UIP_LOGGING == 1
 #include <stdio.h>
@@ -207,11 +208,6 @@ uint8_t uip_flags;
 /* uip_conn always points to the current connection (set to NULL for UDP). */
 struct uip_conn *uip_conn;
 
-/* Temporary variables. */
-#if (UIP_TCP || UIP_UDP)
-static uint8_t c;
-#endif
-
 #if UIP_ACTIVE_OPEN || UIP_UDP
 /* Keeps track of the last port used for a new connection. */
 static uint16_t lastport;
@@ -256,8 +252,6 @@ static uint8_t iss[4];
 
 /* Temporary variables. */
 uint8_t uip_acc32[4];
-static uint8_t opt;
-static uint16_t tmp16;
 #endif /* UIP_TCP */
 /** @} */
 
@@ -432,6 +426,7 @@ uip_udpchksum(void)
 void
 uip_init(void)
 {
+  int c;
 
   uip_ds6_init();
   uip_icmp6_init();
@@ -466,6 +461,7 @@ struct uip_conn *
 uip_connect(const uip_ipaddr_t *ripaddr, uint16_t rport)
 {
   register struct uip_conn *conn, *cconn;
+  int c;
 
   /* Find an unused local port. */
   again:
@@ -560,6 +556,7 @@ remove_ext_hdr(void)
 struct uip_udp_conn *
 uip_udp_new(const uip_ipaddr_t *ripaddr, uint16_t rport)
 {
+  int c;
   register struct uip_udp_conn *conn;
 
   /* Find an unused local port. */
@@ -605,6 +602,7 @@ uip_udp_new(const uip_ipaddr_t *ripaddr, uint16_t rport)
 void
 uip_unlisten(uint16_t port)
 {
+  int c;
   for(c = 0; c < UIP_LISTENPORTS; ++c) {
     if(uip_listenports[c] == port) {
       uip_listenports[c] = 0;
@@ -616,6 +614,7 @@ uip_unlisten(uint16_t port)
 void
 uip_listen(uint16_t port)
 {
+  int c;
   for(c = 0; c < UIP_LISTENPORTS; ++c) {
     if(uip_listenports[c] == 0) {
       uip_listenports[c] = port;
@@ -891,7 +890,7 @@ ext_hdr_options_process(void)
        */
 #if UIP_CONF_IPV6_RPL
       PRINTF("Processing RPL option\n");
-      if(rpl_verify_header(uip_ext_opt_offset)) {
+      if(rpl_verify_hbh_header(uip_ext_opt_offset)) {
         PRINTF("RPL Option Error: Dropping Packet\n");
         return 1;
       }
@@ -941,6 +940,9 @@ void
 uip_process(uint8_t flag)
 {
 #if UIP_TCP
+  int c;
+  uint16_t tmp16;
+  uint8_t opt;
   register struct uip_conn *uip_connr = uip_conn;
 #endif /* UIP_TCP */
 #if UIP_UDP
@@ -1227,9 +1229,9 @@ uip_process(uint8_t flag)
       }
 
 #if UIP_CONF_IPV6_RPL
-      if(rpl_update_header_empty()) {
+      if(!rpl_update_header()) {
         /* Packet can not be forwarded */
-        PRINTF("RPL Forward Option Error\n");
+        PRINTF("RPL header update error\n");
         goto drop;
       }
 #endif /* UIP_CONF_IPV6_RPL */
@@ -1367,6 +1369,11 @@ uip_process(uint8_t flag)
 
           PRINTF("Processing Routing header\n");
           if(UIP_ROUTING_BUF->seg_left > 0) {
+#if UIP_CONF_IPV6_RPL && RPL_WITH_NON_STORING
+            if(rpl_process_srh_header()) {
+              goto send; /* Proceed to forwarding */
+            }
+#endif /* UIP_CONF_IPV6_RPL && RPL_WITH_NON_STORING */
             uip_icmp6_error_output(ICMP6_PARAM_PROB, ICMP6_PARAMPROB_HEADER, UIP_IPH_LEN + uip_ext_len + 2);
             UIP_STAT(++uip_stat.ip.drop);
             UIP_LOG("ip6: unrecognized routing type");
