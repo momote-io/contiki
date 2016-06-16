@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006, Swedish Institute of Computer Science.
+ * Copyright (c) 2016, Zolertia <http://www.zolertia.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,74 +29,61 @@
  * This file is part of the Contiki operating system.
  *
  */
-
 /**
+ * \addtogroup zoul-examples
+ * @{
+ *
+ * \defgroup zoul-relay-test A simple program to test a generic relay
+ *
+ * Demonstrates the use of a generic relay, connected by default at the ADC1
+ * connector of the RE-Mote
+ *
+ * @{
+ *
  * \file
- *         Module for sending UDP packets through uIP.
+ *         A quick program to test a generic relay
  * \author
- *         Adam Dunkels <adam@sics.se>
+ *         Antonio Lignan <alinan@zolertia.com>
  */
-
-#include "contiki-conf.h"
-
-extern uint16_t uip_slen;
-
-#include "net/ip/uip-udp-packet.h"
-#include "net/ipv6/multicast/uip-mcast6.h"
-
-#include <string.h>
-
 /*---------------------------------------------------------------------------*/
-void
-uip_udp_packet_send(struct uip_udp_conn *c, const void *data, int len)
+#include <stdio.h>
+#include "contiki.h"
+#include "dev/relay.h"
+#include "lib/sensors.h"
+/*---------------------------------------------------------------------------*/
+PROCESS(remote_relay_process, "Generic relay test");
+AUTOSTART_PROCESSES(&remote_relay_process);
+/*---------------------------------------------------------------------------*/
+static struct etimer et;
+/*---------------------------------------------------------------------------*/
+PROCESS_THREAD(remote_relay_process, ev, data)
 {
-#if UIP_UDP
-  if(data != NULL && len <= (UIP_BUFSIZE - (UIP_LLH_LEN + UIP_IPUDPH_LEN))) {
-    uip_udp_conn = c;
-    uip_slen = len;
-    memmove(&uip_buf[UIP_LLH_LEN + UIP_IPUDPH_LEN], data, len);
-    uip_process(UIP_UDP_SEND_CONN);
+  PROCESS_BEGIN();
+  SENSORS_ACTIVATE(relay);
 
-#if UIP_CONF_IPV6_MULTICAST
-  /* Let the multicast engine process the datagram before we send it */
-  if(uip_is_addr_mcast_routable(&uip_udp_conn->ripaddr)) {
-    UIP_MCAST6.out();
-  }
-#endif /* UIP_IPV6_MULTICAST */
+  /* Activate the relay and wait for 5 seconds */
+  relay.value(RELAY_ON);
+  etimer_set(&et, CLOCK_SECOND * 5);
+  printf("\nRelay: switch should be ON --> %u\n", relay.status(SENSORS_ACTIVE));
+  PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
 
-#if NETSTACK_CONF_WITH_IPV6
-    tcpip_ipv6_output();
-#else
-    if(uip_len > 0) {
-      tcpip_output();
-    }
-#endif
+  /* Now turn off and wait 5 seconds more */
+  relay.value(RELAY_OFF);
+  etimer_set(&et, CLOCK_SECOND * 5);
+  printf("Relay: switch should be OFF --> %u\n\n", relay.status(SENSORS_ACTIVE));
+  PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
+
+  /* Let it spin and toggle each second */
+  while(1) {
+    etimer_set(&et, CLOCK_SECOND);
+    PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
+    relay.value(RELAY_TOGGLE);
+    printf("Relay: switch is now --> %u\n", relay.status(SENSORS_ACTIVE));
   }
-  uip_slen = 0;
-#endif /* UIP_UDP */
+  PROCESS_END();
 }
 /*---------------------------------------------------------------------------*/
-void
-uip_udp_packet_sendto(struct uip_udp_conn *c, const void *data, int len,
-		      const uip_ipaddr_t *toaddr, uint16_t toport)
-{
-  uip_ipaddr_t curaddr;
-  uint16_t curport;
-
-  if(toaddr != NULL) {
-    /* Save current IP addr/port. */
-    uip_ipaddr_copy(&curaddr, &c->ripaddr);
-    curport = c->rport;
-
-    /* Load new IP addr/port */
-    uip_ipaddr_copy(&c->ripaddr, toaddr);
-    c->rport = toport;
-
-    uip_udp_packet_send(c, data, len);
-
-    /* Restore old IP addr/port */
-    uip_ipaddr_copy(&c->ripaddr, &curaddr);
-    c->rport = curport;
-  }
-}
-/*---------------------------------------------------------------------------*/
+/**
+ * @}
+ * @}
+ */
