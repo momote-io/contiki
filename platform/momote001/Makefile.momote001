@@ -30,7 +30,7 @@ else
 	$(PYTHON) $(BSL) $(BSL_FLAGS) $<
 endif
 
-CONTIKI_TARGET_SOURCEFILES += contiki-main.c board.c
+CONTIKI_TARGET_SOURCEFILES += contiki-main.c board.c ccfg.c
 CONTIKI_TARGET_SOURCEFILES += leds-arch.c button-sensor.c ext-flash.c momote001-sensors.c
 CONTIKI_TARGET_SOURCEFILES += sensors.c leds.c
 #CONTIKI_TARGET_SOURCEFILES += $(BOARD_SOURCEFILES)
