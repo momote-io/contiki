@@ -297,8 +297,7 @@
  * Override button symbols from dev/button-sensor.h, for the examples that
  * include it
  */
-#define button_sensor button_left_sensor
-#define button_sensor2 button_right_sensor
+#define button_sensor button_select_sensor
 /** @} */
 /*---------------------------------------------------------------------------*/
 /* Platform-specific define to signify sensor reading failure */
