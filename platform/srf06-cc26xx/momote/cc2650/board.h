@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Texas Instruments Incorporated - http://www.ti.com/
+ * Copyright (c) 2015, Texas Instruments Incorporated - http://www.ti.com/
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,25 +28,22 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*---------------------------------------------------------------------------*/
-/** \addtogroup cc26xx-srf-tag
+/** \addtogroup launchpad-peripherals
  * @{
  *
- * \defgroup srf06-cc26xx-peripherals Peripherals for the SmartRF06EB + CC26xxEM
+ * \defgroup launchpad-cc26xx-specific CC2650 LaunchPad Peripherals
  *
- * Defines related to the SmartRF06 Evaluation Board with a CC26xxEM
+ * Defines related to the CC2650 LaunchPad
  *
  * This file provides connectivity information on LEDs, Buttons, UART and
  * other peripherals
- *
- * This file can be used as the basis to configure other boards using the
- * CC13xx/CC26xx code as their basis.
  *
  * This file is not meant to be modified by the user.
  * @{
  *
  * \file
  * Header file with definitions related to the I/O connections on the TI
- * SmartRF06 Evaluation Board with a CC26xxEM
+ * CC2650 LaunchPad
  *
  * \note   Do not include this file directly. It gets included by contiki-conf
  *         after all relevant directives have been set.
@@ -65,12 +62,17 @@
  */
 /* Some files include leds.h before us, so we need to get rid of defaults in
  * leds.h before we provide correct definitions */
+#undef LEDS_GREEN
+#undef LEDS_YELLOW
 #undef LEDS_RED
 #undef LEDS_CONF_ALL
 
-#define LEDS_RED       1 /**< LED1 (Red)    */
+#define LEDS_RED       1
+#define LEDS_GREEN     LEDS_RED
+#define LEDS_YELLOW    LEDS_RED
+#define LEDS_ORANGE    LEDS_RED
 
-#define LEDS_CONF_ALL 1
+#define LEDS_CONF_ALL  1
 
 /* Notify various examples that we have LEDs */
 #define PLATFORM_HAS_LEDS        1
@@ -95,12 +97,12 @@
  */
 #define BOARD_IOID_UART_RX        IOID_1
 #define BOARD_IOID_UART_TX        IOID_0
-#define BOARD_IOID_UART_CTS       IOID_UNUSED
 #define BOARD_IOID_UART_RTS       IOID_UNUSED
+#define BOARD_IOID_UART_CTS       IOID_UNUSED
 #define BOARD_UART_RX             (1 << BOARD_IOID_UART_RX)
 #define BOARD_UART_TX             (1 << BOARD_IOID_UART_TX)
-#define BOARD_UART_CTS            (1 << BOARD_IOID_UART_CTS)
 #define BOARD_UART_RTS            (1 << BOARD_IOID_UART_RTS)
+#define BOARD_UART_CTS            (1 << BOARD_IOID_UART_CTS)
 /** @} */
 /*---------------------------------------------------------------------------*/
 /**
@@ -109,22 +111,18 @@
  * Those values are not meant to be modified by the user
  * @{
  */
-#define BOARD_IOID_KEY_SELECT     IOID_5
-#define BOARD_KEY_SELECT          (1 << BOARD_IOID_KEY_SELECT)
+#define BOARD_IOID_KEY_SELECT       IOID_5
+#define BOARD_KEY_SELECT            (1 << BOARD_IOID_KEY_SELECT)
 /** @} */
 /*---------------------------------------------------------------------------*/
 /**
- * \name SPI IOID mapping
+ * \brief SPI IOID mappings
  *
  * Those values are not meant to be modified by the user
  * @{
  */
-#define BOARD_IOID_SPI_SCK        IOID_11
 #define BOARD_IOID_SPI_MOSI       IOID_12
 #define BOARD_IOID_SPI_MISO       IOID_14
-#define BOARD_SPI_SCK             (1 << BOARD_IOID_SPI_SCK)
-#define BOARD_SPI_MOSI            (1 << BOARD_IOID_SPI_MOSI)
-#define BOARD_SPI_MISO            (1 << BOARD_IOID_SPI_MISO)
 /** @} */
 /*---------------------------------------------------------------------------*/
 /**
@@ -135,7 +133,7 @@
  */
 #define BOARD_IOID_FLASH_CS       IOID_13
 #define BOARD_FLASH_CS            (1 << BOARD_IOID_FLASH_CS)
-#define BOARD_IOID_SPI_CLK_FLASH  BOARD_IOID_SPI_SCK
+#define BOARD_IOID_SPI_CLK_FLASH  IOID_11
 /** @} */
 /*---------------------------------------------------------------------------*/
 /**
@@ -143,6 +141,7 @@
  * @{
  */
 #define BOARD_STRING "momote001"
+
 /** @} */
 /*---------------------------------------------------------------------------*/
 #endif /* BOARD_H_ */

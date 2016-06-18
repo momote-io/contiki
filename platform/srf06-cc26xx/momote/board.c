@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Texas Instruments Incorporated - http://www.ti.com/
+ * Copyright (c) 2015, Texas Instruments Incorporated - http://www.ti.com/
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,21 +29,22 @@
  */
 /*---------------------------------------------------------------------------*/
 /**
- * \addtogroup sensortag-common-peripherals
+ * \addtogroup launchpad-peripherals
  * @{
  *
  * \file
- *  Board-initialisation for the Srf06EB with a CC13xx/CC26xx EM.
+ *  LaunchPad-specific board initialisation driver
  */
 /*---------------------------------------------------------------------------*/
 #include "contiki-conf.h"
-#include "ti-lib.h"
+#include "lib/sensors.h"
 #include "lpm.h"
-#include "prcm.h"
-#include "hw_sysctl.h"
+#include "ti-lib.h"
+#include "board-peripherals.h"
 
 #include <stdint.h>
 #include <string.h>
+#include <stdbool.h>
 /*---------------------------------------------------------------------------*/
 static void
 wakeup_handler(void)
@@ -51,7 +52,7 @@ wakeup_handler(void)
   /* Turn on the PERIPH PD */
   ti_lib_prcm_power_domain_on(PRCM_DOMAIN_PERIPH);
   while((ti_lib_prcm_power_domain_status(PRCM_DOMAIN_PERIPH)
-        != PRCM_DOMAIN_POWER_ON));
+         != PRCM_DOMAIN_POWER_ON));
 }
 /*---------------------------------------------------------------------------*/
 /*
@@ -60,49 +61,30 @@ wakeup_handler(void)
  * getting notified before deep sleep. All we need is to be notified when we
  * wake up so we can turn power domains back on
  */
-LPM_MODULE(srf_module, NULL, NULL, wakeup_handler, LPM_DOMAIN_NONE);
+LPM_MODULE(launchpad_module, NULL, NULL, wakeup_handler, LPM_DOMAIN_NONE);
 /*---------------------------------------------------------------------------*/
 static void
 configure_unused_pins(void)
 {
-  /* DP[0..3] */
-  ti_lib_ioc_pin_type_gpio_input(IOID_0);
-  ti_lib_ioc_io_port_pull_set(IOID_0, IOC_IOPULL_DOWN);
-  ti_lib_ioc_pin_type_gpio_input(IOID_1);
-  ti_lib_ioc_io_port_pull_set(IOID_1, IOC_IOPULL_DOWN);
-  ti_lib_ioc_pin_type_gpio_input(IOID_2);
-  ti_lib_ioc_io_port_pull_set(IOID_2, IOC_IOPULL_DOWN);
-  ti_lib_ioc_pin_type_gpio_input(IOID_3);
-  ti_lib_ioc_io_port_pull_set(IOID_3, IOC_IOPULL_DOWN);
-  ti_lib_ioc_pin_type_gpio_input(IOID_4);
-  ti_lib_ioc_io_port_pull_set(IOID_4, IOC_IOPULL_DOWN);
-  ti_lib_ioc_pin_type_gpio_input(IOID_5);
-  ti_lib_ioc_io_port_pull_set(IOID_5, IOC_IOPULL_DOWN);
-  ti_lib_ioc_pin_type_gpio_input(IOID_6);
-  ti_lib_ioc_io_port_pull_set(IOID_6, IOC_IOPULL_DOWN);
-  ti_lib_ioc_pin_type_gpio_input(IOID_7);
-  ti_lib_ioc_io_port_pull_set(IOID_7, IOC_IOPULL_DOWN);
-  ti_lib_ioc_pin_type_gpio_input(IOID_8);
-  ti_lib_ioc_io_port_pull_set(IOID_8, IOC_IOPULL_DOWN);
-  ti_lib_ioc_pin_type_gpio_input(IOID_9);
-  ti_lib_ioc_io_port_pull_set(IOID_9, IOC_IOPULL_DOWN);
-  ti_lib_ioc_pin_type_gpio_input(IOID_10);
-  ti_lib_ioc_io_port_pull_set(IOID_10, IOC_IOPULL_DOWN);
-  ti_lib_ioc_pin_type_gpio_input(IOID_11);
-  ti_lib_ioc_io_port_pull_set(IOID_11, IOC_IOPULL_DOWN);
-  ti_lib_ioc_pin_type_gpio_input(IOID_12);
-  ti_lib_ioc_io_port_pull_set(IOID_12, IOC_IOPULL_DOWN);
-  ti_lib_ioc_pin_type_gpio_input(IOID_13);
-  ti_lib_ioc_io_port_pull_set(IOID_13, IOC_IOPULL_DOWN);
-  ti_lib_ioc_pin_type_gpio_input(IOID_14);
-  ti_lib_ioc_io_port_pull_set(IOID_14, IOC_IOPULL_DOWN);
-}
+  uint32_t pins[] = {
+    IOID_0, IOID_1, IOID_2, IOID_3, IOID_4, IOID_5, IOID_6, IOID_7, IOID_8, IOID_9, IOID_10, IOID_11, IOID_12, IOID_13, IOID_14,
+//BOARD_IOID_CS, BOARD_IOID_TDO, BOARD_IOID_TDI, BOARD_IOID_DIO12,
+    IOID_UNUSED
+  };
 
+  uint32_t *pin;
+
+  for(pin = pins; *pin != IOID_UNUSED; pin++) {
+    ti_lib_ioc_pin_type_gpio_input(*pin);
+    ti_lib_ioc_io_port_pull_set(*pin, IOC_IOPULL_DOWN);
+  }
+}
 /*---------------------------------------------------------------------------*/
 void
 board_init()
 {
-  uint8_t int_disabled = ti_lib_int_master_disable();
+  /* Disable global interrupts */
+  bool int_disabled = ti_lib_int_master_disable();
 
   /* Turn on relevant PDs */
   wakeup_handler();
@@ -114,8 +96,12 @@ board_init()
   ti_lib_prcm_load_set();
   while(!ti_lib_prcm_load_get());
 
-  lpm_register_module(&srf_module);
+  /* Make sure the external flash is in the lower power mode */
+  ext_flash_init();
 
+  lpm_register_module(&launchpad_module);
+
+  /* For unsupported peripherals, select a default pin configuration */
   configure_unused_pins();
 
   /* Re-enable interrupt if initially enabled. */

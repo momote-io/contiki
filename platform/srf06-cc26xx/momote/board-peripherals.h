@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Texas Instruments Incorporated - http://www.ti.com/
+ * Copyright (c) 2015, Texas Instruments Incorporated - http://www.ti.com/
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,29 +28,29 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*---------------------------------------------------------------------------*/
-/**
- * \addtogroup srf06-common-peripherals
+/** \addtogroup cc26xx-srf-tag
+ * @{
+ *
+ * \defgroup launchpad-peripherals LaunchPad peripherals
+ *
+ * Defines related to LaunchPad peripherals.
+ *
  * @{
  *
  * \file
- * Header file for the SmartRF06EB + CC13xx/CC26xxEM Button Driver
+ * Header file with definitions related to LaunchPad peripherals
+ *
+ * \note   Do not include this file directly.
  */
 /*---------------------------------------------------------------------------*/
-#ifndef BUTTON_SENSOR_H_
-#define BUTTON_SENSOR_H_
+#ifndef BOARD_PERIPHERALS_H_
+#define BOARD_PERIPHERALS_H_
 /*---------------------------------------------------------------------------*/
-#include "lib/sensors.h"
+#include "ext-flash.h"
 /*---------------------------------------------------------------------------*/
-#define BUTTON_SENSOR "Button"
+#endif /* BOARD_PERIPHERALS_H_ */
 /*---------------------------------------------------------------------------*/
-#define BUTTON_SENSOR_VALUE_STATE    0
-#define BUTTON_SENSOR_VALUE_DURATION 1
-
-#define BUTTON_SENSOR_VALUE_RELEASED 0
-#define BUTTON_SENSOR_VALUE_PRESSED  1
-/*---------------------------------------------------------------------------*/
-extern const struct sensors_sensor button_select_sensor;
-/*---------------------------------------------------------------------------*/
-#endif /* BUTTON_SENSOR_H_ */
-/*---------------------------------------------------------------------------*/
-/** @} */
+/**
+ * @}
+ * @}
+ */
